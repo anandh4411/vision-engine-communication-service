@@ -1,18 +1,36 @@
 const express = require("express");
-const app = express();
+const http = require("http");
+const socketIo = require("socket.io");
+
+const cors = require("cors");
+const corsOptions = require("./config/cors");
+const loggerMiddleware = require("./src/middlewares/logger");
 
 require("dotenv").config();
 require("./config/db")();
 require("./config/config")();
-// require("./src/routes")(app);
 
-const server = require("http").Server(app);
-const io = require("socket.io")(server);
-const path = require("path");
+const app = express();
+const server = http.createServer(app);
 
-app.use("/static", express.static("public"));
+app.use(express.json());
+app.use(cors(corsOptions));
+app.use(loggerMiddleware);
 
-// get one users
+const io = socketIo(server, {
+  cors: {
+    origin: "https://visionengine.vercel.app",
+    methods: ["GET", "POST"],
+    credentials: true, // If needed
+  },
+});
+
+app.use(
+  cors({
+    origin: "https://visionengine.vercel.app",
+  })
+);
+
 app.get("/", (req, res) => {
   res.send({
     message:
@@ -20,23 +38,49 @@ app.get("/", (req, res) => {
   });
 });
 
-io.on("connection", (socket) => {
-  socket.on("join-room", (roomId, userId) => {
-    // join the room
-    socket.join(roomId);
-    // say to all connected user that a new user joined
-    socket.to(roomId).broadcast.emit("user-connected", userId);
+const rooms = {};
 
-    // when user lefts
-    socket.on("disconnect", () => {
-      socket.to(roomId).broadcast.emit("user-disconnected", userId);
-    });
+io.on("connection", (socket) => {
+  console.log("New user connected:", socket.id);
+
+  socket.on("create-room", (roomId) => {
+    rooms[roomId] = socket;
+    console.log(`Room created: ${roomId}`);
+  });
+  socket.on("request-join-room", (roomId, peerId) => {
+    console.log("requested");
+    const hostSocket = rooms[roomId];
+    if (hostSocket) {
+      hostSocket.emit("user-requested", socket.id, roomId, peerId);
+    }
+  });
+  socket.on("added-to-call", (roomId) => {
+    const hostSocket = rooms[roomId];
+    if (hostSocket) {
+      hostSocket.emit("you-are-added", roomId);
+      console.log("added");
+    }
+  });
+  socket.on("join-room", (roomId) => {
+    const hostSocket = rooms[roomId];
+    if (hostSocket) {
+      hostSocket.emit("user-joined", socket.id);
+      console.log(`User joined room: ${roomId}`);
+    } else {
+      console.log(`Room not found: ${roomId}`);
+    }
+  });
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+    // Remove the socket from rooms if needed
+    // Delete rooms[roomId];
   });
 });
 
-server.listen(3002);
+const PORT = process.env.PORT || 3002;
 
-// const port = process.env.PORT || 3002;
-// app.listen(port, () => console.log(`Listening on port ${port}..`));
+server.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
 
-module.exports = app;
+module.exports = server;
