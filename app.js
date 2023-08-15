@@ -17,9 +17,11 @@ app.use(express.json());
 app.use(cors(corsOptions));
 app.use(loggerMiddleware);
 
+// https://visionengine.vercel.app
+
 const io = socketIo(server, {
   cors: {
-    origin: "https://visionengine.vercel.app",
+    origin: "http://localhost:4200",
     methods: ["GET", "POST"],
     credentials: true, // If needed
   },
@@ -27,7 +29,7 @@ const io = socketIo(server, {
 
 app.use(
   cors({
-    origin: "https://visionengine.vercel.app",
+    origin: "http://localhost:4200",
   })
 );
 
@@ -79,7 +81,7 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3002;
 
-server.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
 
