@@ -14,7 +14,7 @@ const app = express();
 const server = http.createServer(app);
 
 app.use(express.json());
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
 app.use(loggerMiddleware);
 
 // https://visionengine.vercel.app
@@ -27,11 +27,13 @@ const io = socketIo(server, {
   },
 });
 
-app.use(
-  cors({
-    origin: "http://localhost:4200",
-  })
-);
+// app.use(
+//   cors({
+//     origin: "http://localhost:4200",
+//   })
+// );
+
+app.use(cors());
 
 app.get("/", (req, res) => {
   res.send({
