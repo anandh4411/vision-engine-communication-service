@@ -7,8 +7,8 @@ const corsOptions = require("./config/cors");
 const loggerMiddleware = require("./src/middlewares/logger");
 
 require("dotenv").config();
-require("./config/db")();
-require("./config/config")();
+// require("./config/db")();
+// require("./config/config")();
 
 const app = express();
 const server = http.createServer(app);
