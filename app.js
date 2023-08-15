@@ -21,7 +21,7 @@ app.use(loggerMiddleware);
 
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:4200",
+    origin: "https://visionengine.vercel.app",
     methods: ["GET", "POST"],
     credentials: true, // If needed
   },
